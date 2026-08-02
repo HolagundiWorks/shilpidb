@@ -1,0 +1,19 @@
+[package]
+name = "shilpidb"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.90"
+license = "Apache-2.0"
+repository = "https://github.com/HolagundiWorks/shilpidb"
+authors = ["HolagundiWorks"]
+description = "A small, dependency-free spatial vector-store engine: a hand-rolled little-endian binary codec and a uniform-grid spatial index — the storage core behind ShilpiDB (.vdb) databases."
+readme = "README.md"
+keywords = ["database", "spatial", "index", "geometry", "binary"]
+categories = ["database-implementations", "data-structures", "encoding"]
+
+# Deliberately zero dependencies (std only): the whole point of ShilpiDB is a
+# storage engine we own end to end — no serde, no external crate, unsafe-free.
+[dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"
