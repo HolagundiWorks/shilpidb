@@ -13,7 +13,7 @@
 //! windows and points against the index in `O(cells + hits)`.
 //!
 //! ```
-//! use shilpidb::{Bbox, Point, SpatialGrid, Writer, Reader, MAGIC};
+//! use shilpidb::{Bbox, SpatialGrid, Writer, Reader, MAGIC};
 //!
 //! // Build an index over two records and persist it after the magic header.
 //! let grid = SpatialGrid::build(vec![

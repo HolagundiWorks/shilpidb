@@ -2,9 +2,9 @@
 //!
 //! Deliberately hand-rolled (no `serde`, no external crate) — ShilpiDB is a
 //! *custom* format we fully control. Strings are `u32`-length-prefixed UTF-8;
-//! integers and floats are fixed-width little-endian.
-
-use crate::geom::Point;
+//! integers and floats are fixed-width little-endian. The codec is intentionally
+//! **scalar-only** (no geometry types) so it stays domain-agnostic; a host
+//! composes points/records from `f64`s.
 
 /// Errors from ShilpiDB encoding / decoding / I/O.
 #[derive(Debug)]
@@ -65,12 +65,6 @@ impl Writer {
 
     pub fn f64(&mut self, v: f64) {
         self.buf.extend_from_slice(&v.to_le_bytes());
-    }
-
-    /// A point, as two `f64`s.
-    pub fn point(&mut self, p: Point) {
-        self.f64(p.x);
-        self.f64(p.y);
     }
 
     /// `u32` length prefix + UTF-8 bytes.
@@ -142,10 +136,6 @@ impl<'a> Reader<'a> {
         ]))
     }
 
-    pub fn point(&mut self) -> Result<Point, Error> {
-        Ok(Point::new(self.f64()?, self.f64()?))
-    }
-
     pub fn str(&mut self) -> Result<String, Error> {
         let n = self.u32()? as usize;
         let b = self.take(n)?;
@@ -171,7 +161,6 @@ mod tests {
         w.i64(-42);
         w.f64(3.5);
         w.str("hÉllo");
-        w.point(Point::new(1.5, -2.5));
         let bytes = w.into_bytes();
 
         let mut r = Reader::new(&bytes);
@@ -182,7 +171,6 @@ mod tests {
         assert_eq!(r.i64().unwrap(), -42);
         assert_eq!(r.f64().unwrap(), 3.5);
         assert_eq!(r.str().unwrap(), "hÉllo");
-        assert_eq!(r.point().unwrap(), Point::new(1.5, -2.5));
     }
 
     #[test]

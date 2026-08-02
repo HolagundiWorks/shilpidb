@@ -130,8 +130,10 @@ impl SpatialGrid {
         w.u32(self.boxes.len() as u32);
         for (id, bb) in &self.boxes {
             w.u64(*id);
-            w.point(bb.min);
-            w.point(bb.max);
+            w.f64(bb.min.x);
+            w.f64(bb.min.y);
+            w.f64(bb.max.x);
+            w.f64(bb.max.y);
         }
     }
 
@@ -145,8 +147,8 @@ impl SpatialGrid {
         let mut boxes = Vec::with_capacity(n);
         for _ in 0..n {
             let id = r.u64()?;
-            let min = r.point()?;
-            let max = r.point()?;
+            let min = Point::new(r.f64()?, r.f64()?);
+            let max = Point::new(r.f64()?, r.f64()?);
             boxes.push((id, Bbox { min, max }));
         }
         let mut grid = SpatialGrid {
