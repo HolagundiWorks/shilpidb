@@ -68,6 +68,12 @@ or run in place per the quick start below.
 cargo run -p shilpid -- --bind 127.0.0.1:7420 --data ./mydb.vdb
 ```
 
+`shilpid --help` lists every option: a config file (`--config PATH`, or
+`./shilpid.conf` if present), `SHILPID_*` environment variables, autosave
+interval, a connection cap, read-only mode, log level, and the spatial-grid
+tunables — flags override env vars override the config file override
+built-in defaults, same precedence as `mongod --config`.
+
 In another terminal:
 
 ```bash

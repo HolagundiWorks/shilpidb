@@ -14,13 +14,14 @@ use std::fs::{self, File};
 use std::io::{self, BufReader, BufWriter, Read, Write};
 use std::path::Path;
 
-use shilpidb::{Bbox, Point, Reader, SpatialGrid, Writer, MAGIC};
+use shilpidb::{Bbox, GridConfig, Point, Reader, SpatialGrid, Writer, MAGIC};
 
 const FORMAT_VERSION: u32 = 1;
 
 pub struct Database {
     records: HashMap<u64, (Bbox, Vec<u8>)>,
     grid: Option<SpatialGrid>,
+    grid_config: GridConfig,
 }
 
 impl Database {
@@ -28,7 +29,15 @@ impl Database {
         Database {
             records: HashMap::new(),
             grid: None,
+            grid_config: GridConfig::default(),
         }
+    }
+
+    /// Install the spatial-index tunables used the next time the grid is built.
+    /// Invalidates any cached grid so the new config takes effect immediately.
+    pub fn set_grid_config(&mut self, config: GridConfig) {
+        self.grid_config = config;
+        self.grid = None;
     }
 
     /// Load a database from `path`, or start empty if the file doesn't exist.
@@ -80,6 +89,7 @@ impl Database {
         Ok(Database {
             records,
             grid: None,
+            grid_config: GridConfig::default(),
         })
     }
 
@@ -155,7 +165,7 @@ impl Database {
                 .iter()
                 .map(|(id, (bb, _))| (*id, *bb))
                 .collect();
-            self.grid = Some(SpatialGrid::build(boxes));
+            self.grid = Some(SpatialGrid::build_with_config(boxes, self.grid_config));
         }
         self.grid.as_ref().unwrap()
     }

@@ -1,74 +1,46 @@
 //! `shilpid` — the ShilpiDB server. Listens for `shilpi-protocol` clients
 //! over TCP and serves an in-memory, file-backed spatial record store.
 //!
-//! ```text
-//! shilpid [--bind ADDR:PORT] [--data PATH]
-//! ```
+//! Run `shilpid --help` for the full option list (bind address, data file,
+//! autosave, connection cap, read-only mode, log level, spatial-grid
+//! tunables) — see [`config`] for the config-file/env/flag layering, and
+//! `--config PATH` / `./shilpid.conf` for file-based configuration.
 //!
-//! Defaults: `--bind 127.0.0.1:7420 --data ./shilpidb.vdb`. The data file is
-//! loaded at startup if present, and flushed on an explicit `Save` request
-//! (the CLI shell's `db.save()`) or on a clean Ctrl-C shutdown.
+//! The data file is loaded at startup if present, and flushed on an
+//! explicit `Save` request (the CLI shell's `db.save()`), the configured
+//! autosave interval, or a clean shutdown.
 
+mod config;
 mod db;
 mod server;
 
-use std::path::PathBuf;
-
+use config::{Config, LogLevel};
 use db::Database;
 use server::Server;
 
-struct Args {
-    bind: String,
-    data: PathBuf,
-}
-
-fn parse_args() -> Args {
-    let mut bind = "127.0.0.1:7420".to_string();
-    let mut data = PathBuf::from("./shilpidb.vdb");
-    let mut args = std::env::args().skip(1);
-    while let Some(arg) = args.next() {
-        match arg.as_str() {
-            "--bind" => {
-                bind = args.next().expect("--bind requires an ADDR:PORT value");
-            }
-            "--data" => {
-                data = PathBuf::from(args.next().expect("--data requires a PATH value"));
-            }
-            "-h" | "--help" => {
-                println!("shilpid [--bind ADDR:PORT] [--data PATH]");
-                std::process::exit(0);
-            }
-            "-V" | "--version" => {
-                println!("shilpid {}", env!("CARGO_PKG_VERSION"));
-                std::process::exit(0);
-            }
-            other => {
-                eprintln!("shilpid: unrecognized argument '{other}'");
-                std::process::exit(2);
-            }
-        }
-    }
-    Args { bind, data }
-}
-
 fn main() {
-    let args = parse_args();
+    let cfg = Config::load();
+    config::set_log_level(cfg.log_level);
 
-    let db = match Database::load(&args.data) {
+    let mut db = match Database::load(&cfg.data) {
         Ok(db) => db,
         Err(e) => {
-            eprintln!("shilpid: failed to load '{}': {e}", args.data.display());
+            eprintln!("shilpid: failed to load '{}': {e}", cfg.data.display());
             std::process::exit(1);
         }
     };
-    eprintln!(
-        "shilpid: loaded {} record(s) from '{}'",
-        db.len(),
-        args.data.display()
+    db.set_grid_config(cfg.grid);
+    config::log(
+        LogLevel::Info,
+        &format!(
+            "loaded {} record(s) from '{}'",
+            db.len(),
+            cfg.data.display()
+        ),
     );
 
-    let server = Server::new(db, args.data);
-    if let Err(e) = server.run(&args.bind) {
+    let server = Server::new(db, &cfg);
+    if let Err(e) = server.run() {
         eprintln!("shilpid: server error: {e}");
         std::process::exit(1);
     }

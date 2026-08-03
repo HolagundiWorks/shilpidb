@@ -14,7 +14,7 @@
 //! Everything here is std-only and hand-rolled: no `serde`, no `toml` crate,
 //! matching the engine's dependency-free stance.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicU8, Ordering};
 
 use shilpidb::GridConfig;
@@ -430,11 +430,6 @@ fn cell_from(v: f64) -> Option<f64> {
     (v.is_finite() && v > 0.0).then_some(v)
 }
 
-/// Convenience the daemon uses to note where it loaded config from.
-pub fn describe_source(path: &Path) -> String {
-    format!("config file '{}'", path.display())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -506,7 +501,10 @@ max_query_cells = 4096
 
     #[test]
     fn cell_size_zero_or_negative_is_auto() {
-        assert_eq!(resolve("[grid]\ncell_size = 0", &[]).unwrap().grid.cell, None);
+        assert_eq!(
+            resolve("[grid]\ncell_size = 0", &[]).unwrap().grid.cell,
+            None
+        );
         assert_eq!(
             resolve("[grid]\ncell_size = -3", &[]).unwrap().grid.cell,
             None

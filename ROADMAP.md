@@ -26,6 +26,10 @@ engine" product shape around it:
   / list-boxes / stats / save.
 - **`shilpid`** — the server. Std-only TCP, threaded connections, an
   in-memory record store backed by `SpatialGrid`, atomic file persistence.
+  Configuration ([`config.rs`](crates/shilpid/src/config.rs)) layers a config
+  file (TOML subset, `--config`/`./shilpid.conf`), `SHILPID_*` env vars, and
+  CLI flags — bind address, autosave interval, a connection cap, read-only
+  mode, log level, and the spatial-grid tunables (`GridConfig`).
 - **`shilpi`** — a `mongosh`-style CLI shell that connects to `shilpid` and
   runs the same operations interactively or via `-e "<command>"`.
 - **ShilpiDB Desktop** ([`gui/`](gui)) — a Tauri GUI (the Compass
