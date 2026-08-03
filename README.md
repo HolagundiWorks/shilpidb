@@ -1,18 +1,55 @@
 # ShilpiDB
 
-A small, **dependency-free** spatial vector-store engine in Rust: a hand-rolled
-little-endian binary codec plus a uniform-grid **spatial index** over record
-bounding boxes. It is the storage core behind [AAD](https://github.com/HolagundiWorks/AADT)'s
-`.vdb` databases, extracted so it can be reused — and, eventually, run as a
-standalone server.
+A small, **dependency-free** spatial vector-store engine in Rust, plus a
+MongoDB-shaped product around it: a server, a shell, and a desktop GUI.
 
-- **Domain-agnostic.** Records are opaque `u64` ids with a `Bbox`; the payload
-  bytes are whatever you encode with the `Writer` / `Reader`.
-- **Owned end to end.** No `serde`, no external crate, `#![forbid(unsafe_code)]`.
-- **Spatial by design.** `O(cells + hits)` window and point queries via
-  `SpatialGrid`, and the index serializes into your file so it persists.
+**Where this is headed:** a database manager purpose-built for 2D vector
+graphics — storing drawing files (CAD-style geometry: lines, polylines, arcs,
+text, layers) as structured vector data rather than pixels, so it can be
+queried spatially today and, later, embedded and searched semantically for AI
+tooling. See [ARCHITECTURE.md](ARCHITECTURE.md) for that long-term vision and
+[ROADMAP.md](ROADMAP.md) for the concrete plan getting there. What's below is
+what's actually implemented right now.
 
-## Use
+## Components
+
+| Crate / dir                                 | What it is                                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [`crates/shilpidb`](crates/shilpidb)         | The storage engine: a hand-rolled little-endian binary codec (`Writer`/`Reader`) and a uniform-grid spatial index (`SpatialGrid`) over `(u64, Bbox)` records. `#![forbid(unsafe_code)]`, zero dependencies. |
+| [`crates/shilpi-protocol`](crates/shilpi-protocol) | The length-framed request/response wire protocol `shilpid` and its clients (the shell, the GUI) share, built on the `shilpidb` codec. |
+| [`crates/shilpid`](crates/shilpid)           | The server: a TCP daemon, an in-memory record store backed by `SpatialGrid`, file persistence. |
+| [`crates/shilpi`](crates/shilpi)             | A `mongosh`-style CLI shell that talks to `shilpid`.                                 |
+| [`gui`](gui)                                 | ShilpiDB Desktop — a Tauri GUI (the Compass equivalent) for browsing and querying a `shilpid` server. Its own Cargo workspace; see [`gui/README.md`](gui/README.md). |
+
+Everything except `gui` is one Cargo workspace rooted here, and stays
+dependency-free (std only). `gui` pulls in Tauri/serde/tokio, so it's
+deliberately excluded from that workspace — see the `exclude` note in
+[`Cargo.toml`](Cargo.toml).
+
+## Quick start: server + shell
+
+```bash
+cargo run -p shilpid -- --bind 127.0.0.1:7420 --data ./mydb.vdb
+```
+
+In another terminal:
+
+```bash
+cargo run -p shilpi -- --host 127.0.0.1:7420
+shilpi> insert 1 0 0 10 10 hello
+ok
+shilpi> query bbox -5 -5 5 5
+1
+shilpi> get 1
+bbox=(0, 0)-(10, 10) payload="hello"
+shilpi> save
+ok
+shilpi> help
+```
+
+`shilpi -e "<command>"` runs one command non-interactively (scripting/tests).
+
+## Use the storage engine directly
 
 ```rust
 use shilpidb::{Bbox, SpatialGrid};
@@ -26,15 +63,32 @@ assert_eq!(grid.query_bbox(Bbox::from_corners(0.5, 0.5, 0.9, 0.9)), vec![1]);
 
 A host composes a database file by writing the `MAGIC` header + a version, its
 own payload sections with the codec, and a `SpatialGrid` built from its records'
-boxes. See the crate docs (`cargo doc --open`) for the codec and a full round
-trip.
+boxes — `shilpid`'s own [`db.rs`](crates/shilpid/src/db.rs) is a worked example.
+`SpatialGrid::build_with_config` exposes the grid's tunables (fixed cell size,
+overflow/huge-query thresholds) via `GridConfig`, for hosts that outgrow the
+auto-chosen defaults `build` uses. See the crate docs (`cargo doc -p shilpidb
+--open`) for the codec and a full round trip.
+
+## Desktop GUI
+
+See [`gui/README.md`](gui/README.md) — connect to a `shilpid`, browse records
+on a spatial canvas and in a table, run queries, insert/delete, save to disk.
+The Windows installer bundles the GUI together with `shilpid` and `shilpi` as
+sidecar binaries, so one install sets up the whole stack.
 
 ## Roadmap
 
-ShilpiDB currently ships as an embedded library. The plan is a standalone
-`shilpid` server + `shilpi` shell (MongoDB-style) over a length-framed binary
-wire protocol that reuses this same codec, so the file format and the wire
-format share one encoding.
+1. **Drawing data model** — entity types (polyline, arc, text, …), layers,
+   a documented `.vdb` layout.
+2. **Import/export** — SVG and DXF interchange.
+3. **Metadata, topology, knowledge graph** — engineering objects and
+   relationships, not just geometry with an id.
+4. **AI integration layer** — optional embedding storage per entity/drawing,
+   a similarity index alongside `SpatialGrid`, bring-your-own-model hooks.
+5. **Hardening** — crash-safe writes, benchmarks, format stability.
+
+Full detail in [ROADMAP.md](ROADMAP.md); the destination those phases build
+toward is in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## License
 

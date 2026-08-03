@@ -1,19 +1,24 @@
-[package]
-name = "shilpidb"
+[workspace]
+resolver = "2"
+members = [
+    "crates/shilpidb",
+    "crates/shilpi-protocol",
+    "crates/shilpid",
+    "crates/shilpi",
+]
+# The Tauri GUI (gui/src-tauri) is deliberately its own Cargo workspace, not
+# a member of this one: it pulls in tauri/serde/tokio, which would leak into
+# every `cargo build --workspace` here even though the storage engine and
+# server/shell stay dependency-free. Build it separately (see gui/README.md).
+exclude = ["gui/src-tauri"]
+
+[workspace.package]
 version = "0.1.1"
 edition = "2021"
 rust-version = "1.90"
 license = "Apache-2.0"
 repository = "https://github.com/HolagundiWorks/shilpidb"
 authors = ["HolagundiWorks"]
-description = "A small, dependency-free spatial vector-store engine: a hand-rolled little-endian binary codec and a uniform-grid spatial index — the storage core behind ShilpiDB (.vdb) databases."
-readme = "README.md"
-keywords = ["database", "spatial", "index", "geometry", "binary"]
-categories = ["database-implementations", "data-structures", "encoding"]
 
-# Deliberately zero dependencies (std only): the whole point of ShilpiDB is a
-# storage engine we own end to end — no serde, no external crate, unsafe-free.
-[dependencies]
-
-[lints.rust]
+[workspace.lints.rust]
 unsafe_code = "forbid"

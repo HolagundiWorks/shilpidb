@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ShilpiDB Desktop</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header id="topbar">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <span class="brand-name">ShilpiDB</span>
+      </div>
+
+      <div class="connect-row">
+        <input id="host-input" type="text" value="127.0.0.1:7420" spellcheck="false" />
+        <button id="connect-btn">Connect</button>
+        <button id="disconnect-btn" disabled>Disconnect</button>
+        <button id="start-local-btn">Start local server</button>
+        <span id="status" class="status status-disconnected">disconnected</span>
+      </div>
+    </header>
+
+    <main id="layout">
+      <section id="sidebar">
+        <div class="panel">
+          <h2>Query</h2>
+          <div class="field-grid">
+            <label>min x <input id="q-minx" type="number" value="-100" /></label>
+            <label>min y <input id="q-miny" type="number" value="-100" /></label>
+            <label>max x <input id="q-maxx" type="number" value="100" /></label>
+            <label>max y <input id="q-maxy" type="number" value="100" /></label>
+          </div>
+          <button id="query-btn" disabled>Run bbox query</button>
+          <p class="hint">Results highlight on the canvas and filter the table.</p>
+          <button id="clear-query-btn">Show all records</button>
+        </div>
+
+        <div class="panel">
+          <h2>Insert record</h2>
+          <div class="field-grid">
+            <label>id <input id="i-id" type="number" value="1" min="0" /></label>
+            <label>min x <input id="i-minx" type="number" value="0" /></label>
+            <label>min y <input id="i-miny" type="number" value="0" /></label>
+            <label>max x <input id="i-maxx" type="number" value="10" /></label>
+            <label>max y <input id="i-maxy" type="number" value="10" /></label>
+          </div>
+          <label class="full">payload text <input id="i-payload" type="text" value="" /></label>
+          <button id="insert-btn" disabled>Insert / replace</button>
+        </div>
+
+        <div class="panel" id="detail-panel">
+          <h2>Selected record</h2>
+          <div id="detail-empty" class="hint">Click a record in the table to inspect it.</div>
+          <dl id="detail-body" class="detail hidden">
+            <dt>id</dt><dd id="d-id"></dd>
+            <dt>bbox</dt><dd id="d-bbox"></dd>
+            <dt>payload (text)</dt><dd id="d-text"></dd>
+            <dt>payload (hex)</dt><dd id="d-hex"></dd>
+          </dl>
+          <button id="delete-btn" class="danger hidden">Delete this record</button>
+        </div>
+
+        <div class="panel">
+          <h2>Database</h2>
+          <div id="stats-body" class="hint">Not connected.</div>
+          <button id="save-btn" disabled>Save to disk</button>
+        </div>
+      </section>
+
+      <section id="content">
+        <div id="canvas-wrap">
+          <canvas id="canvas"></canvas>
+        </div>
+        <div id="table-wrap">
+          <table id="records-table">
+            <thead>
+              <tr>
+                <th>id</th>
+                <th>min x</th>
+                <th>min y</th>
+                <th>max x</th>
+                <th>max y</th>
+              </tr>
+            </thead>
+            <tbody id="records-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

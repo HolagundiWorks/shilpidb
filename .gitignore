@@ -1,2 +1,11 @@
 /target
-Cargo.lock
+
+# Cargo.lock is committed (not ignored): the workspace now produces real
+# binaries (shilpid, shilpi) and an installer, which need reproducible
+# builds — not just the shilpidb library.
+
+# Tauri GUI: its own target dir, generated permission schemas, and the
+# sidecar binaries staged there by scripts/prepare-sidecars.* before a build.
+/gui/src-tauri/target
+/gui/src-tauri/gen
+/gui/src-tauri/binaries

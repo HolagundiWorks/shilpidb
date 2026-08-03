@@ -13,12 +13,37 @@ use std::collections::{HashMap, HashSet};
 use crate::codec::{Error, Reader, Writer};
 use crate::geom::{Bbox, Point};
 
-/// A record spanning more grid cells than this is held in an overflow list
-/// instead of being smeared across every cell it touches.
-const MAX_CELLS_PER_ENTITY: i64 = 256;
-/// A query rectangle covering more cells than this falls back to scanning the
-/// (already small) box list rather than walking a huge cell range.
-const MAX_QUERY_CELLS: i64 = 8192;
+/// Default: a record spanning more grid cells than this is held in an overflow
+/// list instead of being smeared across every cell it touches.
+pub const DEFAULT_MAX_CELLS_PER_ENTITY: i64 = 256;
+/// Default: a query rectangle covering more cells than this falls back to
+/// scanning the (already small) box list rather than walking a huge cell range.
+pub const DEFAULT_MAX_QUERY_CELLS: i64 = 8192;
+
+/// Tunables for building a [`SpatialGrid`]. `Default` reproduces the engine's
+/// historical behaviour exactly (auto cell size + the default thresholds), so
+/// [`SpatialGrid::build`] and `build_with_config(_, GridConfig::default())` are
+/// equivalent — existing hosts are unaffected.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct GridConfig {
+    /// Fixed cell size, or `None` to auto-choose one from the record boxes.
+    /// A non-finite or non-positive value is treated as `None`.
+    pub cell: Option<f64>,
+    /// A record spanning more grid cells than this goes to the overflow list.
+    pub max_cells_per_entity: i64,
+    /// A query covering more cells than this scans the box list instead.
+    pub max_query_cells: i64,
+}
+
+impl Default for GridConfig {
+    fn default() -> Self {
+        GridConfig {
+            cell: None,
+            max_cells_per_entity: DEFAULT_MAX_CELLS_PER_ENTITY,
+            max_query_cells: DEFAULT_MAX_QUERY_CELLS,
+        }
+    }
+}
 
 /// A uniform-grid spatial index over `(u64, Bbox)` records.
 #[derive(Debug, Clone)]
@@ -27,6 +52,10 @@ pub struct SpatialGrid {
     boxes: Vec<(u64, Bbox)>,
     buckets: HashMap<(i64, i64), Vec<usize>>,
     oversized: Vec<usize>,
+    /// Overflow threshold (see [`GridConfig::max_cells_per_entity`]).
+    max_cells_per_entity: i64,
+    /// Huge-query fallback threshold (see [`GridConfig::max_query_cells`]).
+    max_query_cells: i64,
 }
 
 fn cell_of(v: f64, cell: f64) -> i64 {
@@ -34,14 +63,29 @@ fn cell_of(v: f64, cell: f64) -> i64 {
 }
 
 impl SpatialGrid {
-    /// Build the index over record bounding boxes, choosing a sensible cell size.
+    /// Build the index over record bounding boxes with default tunables
+    /// (auto-chosen cell size). Equivalent to [`build_with_config`] with
+    /// [`GridConfig::default`].
+    ///
+    /// [`build_with_config`]: SpatialGrid::build_with_config
     pub fn build(boxes: Vec<(u64, Bbox)>) -> Self {
-        let cell = choose_cell(&boxes);
+        Self::build_with_config(boxes, GridConfig::default())
+    }
+
+    /// Build the index with explicit [`GridConfig`] tunables. A configured
+    /// `cell` overrides the auto-chosen size; thresholds are clamped to `>= 1`.
+    pub fn build_with_config(boxes: Vec<(u64, Bbox)>, config: GridConfig) -> Self {
+        let cell = match config.cell {
+            Some(c) if c.is_finite() && c > 0.0 => c,
+            _ => choose_cell(&boxes),
+        };
         let mut grid = SpatialGrid {
             cell,
             boxes,
             buckets: HashMap::new(),
             oversized: Vec::new(),
+            max_cells_per_entity: config.max_cells_per_entity.max(1),
+            max_query_cells: config.max_query_cells.max(1),
         };
         grid.reindex();
         grid
@@ -54,7 +98,7 @@ impl SpatialGrid {
         for (idx, (_, bb)) in self.boxes.iter().enumerate() {
             let (cx0, cy0, cx1, cy1) = cell_bounds(*bb, self.cell);
             let span = (cx1 - cx0 + 1).saturating_mul(cy1 - cy0 + 1);
-            if span > MAX_CELLS_PER_ENTITY {
+            if span > self.max_cells_per_entity {
                 self.oversized.push(idx);
                 continue;
             }
@@ -89,7 +133,7 @@ impl SpatialGrid {
         }
         let (cx0, cy0, cx1, cy1) = cell_bounds(rect, self.cell);
         let span = (cx1 - cx0 + 1).saturating_mul(cy1 - cy0 + 1);
-        if span > MAX_QUERY_CELLS {
+        if span > self.max_query_cells {
             // Degenerate huge query — consider every box (still correct).
             for idx in 0..self.boxes.len() {
                 seen.insert(idx);
@@ -151,11 +195,15 @@ impl SpatialGrid {
             let max = Point::new(r.f64()?, r.f64()?);
             boxes.push((id, Bbox { min, max }));
         }
+        // Thresholds aren't part of the on-disk format (they affect performance,
+        // not query results): reload with the defaults.
         let mut grid = SpatialGrid {
             cell,
             boxes,
             buckets: HashMap::new(),
             oversized: Vec::new(),
+            max_cells_per_entity: DEFAULT_MAX_CELLS_PER_ENTITY,
+            max_query_cells: DEFAULT_MAX_QUERY_CELLS,
         };
         grid.reindex();
         Ok(grid)

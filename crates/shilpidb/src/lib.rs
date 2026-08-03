@@ -40,7 +40,7 @@ mod index;
 
 pub use codec::{Error, Reader, Writer};
 pub use geom::{Bbox, Point};
-pub use index::SpatialGrid;
+pub use index::{GridConfig, SpatialGrid, DEFAULT_MAX_CELLS_PER_ENTITY, DEFAULT_MAX_QUERY_CELLS};
 
 /// File magic (8 bytes) identifying a ShilpiDB database: `b"SHILPIDB"`.
 ///
