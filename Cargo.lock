@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "shilpi"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "shilpi-protocol",
  "shilpidb",
@@ -12,14 +12,14 @@ dependencies = [
 
 [[package]]
 name = "shilpi-protocol"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "shilpidb",
 ]
 
 [[package]]
 name = "shilpid"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "shilpi-protocol",
  "shilpidb",
@@ -27,4 +27,4 @@ dependencies = [
 
 [[package]]
 name = "shilpidb"
-version = "0.1.1"
+version = "0.2.0"

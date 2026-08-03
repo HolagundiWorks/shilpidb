@@ -9,7 +9,7 @@ authors.workspace = true
 description = "Length-framed request/response wire protocol for ShilpiDB's server and clients, built on the shilpidb codec."
 
 [dependencies]
-shilpidb = { path = "../shilpidb", version = "0.1.1" }
+shilpidb = { path = "../shilpidb", version = "0.2.0" }
 
 [lints]
 workspace = true
