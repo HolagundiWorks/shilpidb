@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/shilpidb",
     "crates/shilpi-protocol",
+    "crates/shilpi-client",
     "crates/shilpid",
     "crates/shilpi",
 ]

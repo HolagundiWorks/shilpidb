@@ -11,10 +11,9 @@
 mod command;
 
 use std::io::{self, BufRead, Write};
-use std::net::TcpStream;
 
 use command::{format_response, parse, Command, HELP_TEXT};
-use shilpi_protocol::{recv_response, send_request};
+use shilpi_client::Client;
 
 struct Args {
     host: String,
@@ -50,7 +49,9 @@ fn parse_args() -> Args {
     Args { host, eval }
 }
 
-fn run_one(stream: &mut TcpStream, line: &str) -> io::Result<bool> {
+/// Run one input line against the connected server. `Ok(false)` means the
+/// shell should stop (an `exit` command, or the connection dropped).
+fn run_one(client: &mut Client, line: &str) -> Result<bool, shilpi_client::Error> {
     let cmd = match parse(line) {
         Ok(Some(cmd)) => cmd,
         Ok(None) => return Ok(true),
@@ -69,30 +70,31 @@ fn run_one(stream: &mut TcpStream, line: &str) -> io::Result<bool> {
     let req = cmd
         .into_request()
         .expect("non-help, non-exit commands map to a request");
-    send_request(stream, &req)?;
-    match recv_response(stream)? {
-        Some(resp) => println!("{}", format_response(&resp)),
-        None => {
+    // Use the raw pass-through so any reply (including a server error) is
+    // rendered by `format_response`, exactly as before.
+    match client.request(&req) {
+        Ok(resp) => println!("{}", format_response(&resp)),
+        Err(shilpi_client::Error::Closed) => {
             println!("error: connection closed by server");
             return Ok(false);
         }
+        Err(e) => return Err(e),
     }
     Ok(true)
 }
 
 fn main() {
     let args = parse_args();
-    let mut stream = match TcpStream::connect(&args.host) {
-        Ok(s) => s,
+    let mut client = match Client::connect(&args.host) {
+        Ok(c) => c,
         Err(e) => {
             eprintln!("shilpi: failed to connect to {}: {e}", args.host);
             std::process::exit(1);
         }
     };
-    stream.set_nodelay(true).ok();
 
     if let Some(command_line) = args.eval {
-        if let Err(e) = run_one(&mut stream, &command_line) {
+        if let Err(e) = run_one(&mut client, &command_line) {
             eprintln!("shilpi: {e}");
             std::process::exit(1);
         }
@@ -119,7 +121,7 @@ fn main() {
             println!();
             break; // EOF
         }
-        match run_one(&mut stream, &line) {
+        match run_one(&mut client, &line) {
             Ok(true) => {}
             Ok(false) => break,
             Err(e) => {

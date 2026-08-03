@@ -1,0 +1,16 @@
+[package]
+name = "shilpi-client"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "A small, blocking client library for the ShilpiDB server (shilpid): typed operations over the shilpi-protocol wire protocol, shared by the shell and any embedding host."
+
+[dependencies]
+shilpidb = { path = "../shilpidb", version = "0.2.0" }
+shilpi-protocol = { path = "../shilpi-protocol", version = "0.2.0" }
+
+[lints]
+workspace = true
