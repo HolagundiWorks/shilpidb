@@ -29,10 +29,15 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-          - os: macos-13 # Intel runner
-            target: x86_64-apple-darwin
-          - os: macos-14 # Apple Silicon runner
+          # Both macOS targets build on the Apple Silicon runner: GitHub's
+          # Intel macOS runner pool (macos-13) has been seeing multi-hour (or
+          # indefinite) queue times as it's phased out, while macos-14 stays
+          # readily available. Xcode's toolchain cross-links x86_64-apple-darwin
+          # from an arm64 host natively, no extra setup needed.
+          - os: macos-14
             target: aarch64-apple-darwin
+          - os: macos-14
+            target: x86_64-apple-darwin
           - os: windows-latest
             target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
