@@ -135,6 +135,7 @@ opcodes! {
     OP_STATS = 7,
     OP_SAVE = 8,
     OP_LIST_BOXES = 9,
+    OP_INSERT_MANY = 10,
     OP_PONG = 64,
     OP_OK = 65,
     OP_ERR = 66,
@@ -158,6 +159,9 @@ pub enum Request {
         bbox: Bbox,
         payload: Vec<u8>,
     },
+    /// Insert or replace many records in one round-trip; expect
+    /// [`Response::Ok`]. The whole batch shares one grid rebuild server-side.
+    InsertMany { records: Vec<(u64, Bbox, Vec<u8>)> },
     /// Fetch the record at `id`, if any.
     Get { id: u64 },
     /// Remove the record at `id`, if any.
@@ -203,6 +207,15 @@ impl Request {
                 write_bbox(&mut w, *bbox);
                 write_payload(&mut w, payload);
             }
+            Request::InsertMany { records } => {
+                w.u8(OP_INSERT_MANY);
+                w.u32(records.len() as u32);
+                for (id, bbox, payload) in records {
+                    w.u64(*id);
+                    write_bbox(&mut w, *bbox);
+                    write_payload(&mut w, payload);
+                }
+            }
             Request::Get { id } => {
                 w.u8(OP_GET);
                 w.u64(*id);
@@ -240,6 +253,17 @@ impl Request {
                 let bbox = read_bbox(&mut r)?;
                 let payload = read_payload(&mut r)?;
                 Request::Insert { id, bbox, payload }
+            }
+            OP_INSERT_MANY => {
+                let n = r.u32()? as usize;
+                let mut records = Vec::with_capacity(n);
+                for _ in 0..n {
+                    let id = r.u64()?;
+                    let bbox = read_bbox(&mut r)?;
+                    let payload = read_payload(&mut r)?;
+                    records.push((id, bbox, payload));
+                }
+                Request::InsertMany { records }
             }
             OP_GET => Request::Get { id: r.u64()? },
             OP_DELETE => Request::Delete { id: r.u64()? },
@@ -402,6 +426,12 @@ mod tests {
             Request::Stats,
             Request::Save,
             Request::ListBoxes,
+            Request::InsertMany {
+                records: vec![
+                    (1, bb(0.0, 0.0, 1.0, 1.0), vec![1, 2]),
+                    (2, bb(5.0, 5.0, 6.0, 6.0), vec![]),
+                ],
+            },
         ];
         for req in reqs {
             let bytes = req.encode();

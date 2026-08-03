@@ -176,7 +176,12 @@ fn handle_request(
     read_only: bool,
     req: Request,
 ) -> Response {
-    if read_only && matches!(req, Request::Insert { .. } | Request::Delete { .. }) {
+    if read_only
+        && matches!(
+            req,
+            Request::Insert { .. } | Request::InsertMany { .. } | Request::Delete { .. }
+        )
+    {
         return Response::Err("server is read-only".to_string());
     }
     let mut db = match db.lock() {
@@ -187,6 +192,10 @@ fn handle_request(
         Request::Ping => Response::Pong,
         Request::Insert { id, bbox, payload } => {
             db.insert(id, bbox, payload);
+            Response::Ok
+        }
+        Request::InsertMany { records } => {
+            db.insert_many(records);
             Response::Ok
         }
         Request::Get { id } => match db.get(id) {

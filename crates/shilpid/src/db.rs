@@ -124,6 +124,16 @@ impl Database {
         self.grid = None;
     }
 
+    /// Insert or replace many records at once, invalidating the spatial grid a
+    /// single time rather than per record.
+    pub fn insert_many(&mut self, records: Vec<(u64, Bbox, Vec<u8>)>) {
+        self.records.reserve(records.len());
+        for (id, bbox, payload) in records {
+            self.records.insert(id, (bbox, payload));
+        }
+        self.grid = None;
+    }
+
     pub fn get(&self, id: u64) -> Option<&(Bbox, Vec<u8>)> {
         self.records.get(&id)
     }

@@ -116,6 +116,15 @@ fn typed_api_round_trips_against_a_live_server() {
     assert_eq!(db.list_boxes().unwrap().len(), 2);
     assert_eq!(db.stats().unwrap().count, 2);
 
+    // Batch insert lands in one round-trip.
+    db.insert_many(vec![
+        (3, bb(20.0, 20.0, 21.0, 21.0), b"c".to_vec()),
+        (4, bb(30.0, 30.0, 31.0, 31.0), b"d".to_vec()),
+    ])
+    .unwrap();
+    assert_eq!(db.list().unwrap(), vec![1, 2, 3, 4]);
+    assert_eq!(db.get(3).unwrap().unwrap().payload, b"c");
+
     db.save().unwrap();
     assert!(db.delete(1).unwrap());
     assert!(!db.delete(1).unwrap());

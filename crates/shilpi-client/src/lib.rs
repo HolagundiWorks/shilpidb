@@ -139,6 +139,15 @@ impl<S: Read + Write> Client<S> {
         }
     }
 
+    /// Insert or replace many records in a single round-trip — far cheaper than
+    /// a `insert` per record when storing a whole drawing.
+    pub fn insert_many(&mut self, records: Vec<(u64, Bbox, Vec<u8>)>) -> Result<(), Error> {
+        match self.call(Request::InsertMany { records })? {
+            Response::Ok => Ok(()),
+            other => Err(Error::Unexpected("insert_many", other)),
+        }
+    }
+
     /// Fetch the record at `id`, or `None` if it doesn't exist.
     pub fn get(&mut self, id: u64) -> Result<Option<Record>, Error> {
         match self.call(Request::Get { id })? {
@@ -272,6 +281,20 @@ mod tests {
             })
         );
         assert_eq!(c.get(2).unwrap(), None);
+    }
+
+    #[test]
+    fn insert_many_sends_one_request() {
+        let mut c = client_with(&[Response::Ok]);
+        c.insert_many(vec![(1, bb(), vec![1, 2]), (2, bb(), vec![])])
+            .unwrap();
+        // A single InsertMany frame carried both records.
+        let mut cur = Cursor::new(c.into_inner().wrote);
+        match recv_request(&mut cur).unwrap().unwrap() {
+            Request::InsertMany { records } => assert_eq!(records.len(), 2),
+            other => panic!("expected InsertMany, got {other:?}"),
+        }
+        assert!(recv_request(&mut cur).unwrap().is_none(), "only one frame");
     }
 
     #[test]
