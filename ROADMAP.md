@@ -35,6 +35,11 @@ engine" product shape around it:
 - **Windows installer** — Tauri's bundler, with `shilpid` and `shilpi`
   staged as sidecar binaries, so one installer sets up the server, the
   shell, and the GUI together (see [`gui/README.md`](gui/README.md)).
+- **Cross-platform CLI installers** — [`.github/workflows/release.yml`](.github/workflows/release.yml)
+  builds `shilpid`/`shilpi` natively for Linux, macOS (x86_64 + arm64), and
+  Windows on a pushed `v*` tag and publishes them to a GitHub Release;
+  [`scripts/install.sh`](scripts/install.sh) / [`scripts/install.ps1`](scripts/install.ps1)
+  are the `curl | sh` / `irm | iex` installers for them.
 - End-to-end integration tests spawn the real `shilpid`/`shilpi` binaries
   (not just in-process calls) to cover the actual process boundary.
 - CI on every push/PR: `cargo fmt`, `cargo clippy -D warnings`, build, test

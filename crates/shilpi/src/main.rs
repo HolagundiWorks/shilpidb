@@ -37,6 +37,10 @@ fn parse_args() -> Args {
                 println!("shilpi [--host ADDR:PORT] [-e COMMAND]");
                 std::process::exit(0);
             }
+            "-V" | "--version" => {
+                println!("shilpi {}", env!("CARGO_PKG_VERSION"));
+                std::process::exit(0);
+            }
             other => {
                 eprintln!("shilpi: unrecognized argument '{other}'");
                 std::process::exit(2);

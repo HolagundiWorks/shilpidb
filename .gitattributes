@@ -1,0 +1,10 @@
+# Normalize line endings for text files; force LF for scripts whose shebang
+# or interpreter breaks on CRLF (POSIX shell), regardless of a contributor's
+# local core.autocrlf setting.
+* text=auto
+
+*.sh text eol=lf
+*.rs text eol=lf
+
+*.png binary
+*.ico binary

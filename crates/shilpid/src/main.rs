@@ -38,6 +38,10 @@ fn parse_args() -> Args {
                 println!("shilpid [--bind ADDR:PORT] [--data PATH]");
                 std::process::exit(0);
             }
+            "-V" | "--version" => {
+                println!("shilpid {}", env!("CARGO_PKG_VERSION"));
+                std::process::exit(0);
+            }
             other => {
                 eprintln!("shilpid: unrecognized argument '{other}'");
                 std::process::exit(2);

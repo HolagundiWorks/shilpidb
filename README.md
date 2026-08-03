@@ -26,6 +26,42 @@ dependency-free (std only). `gui` pulls in Tauri/serde/tokio, so it's
 deliberately excluded from that workspace — see the `exclude` note in
 [`Cargo.toml`](Cargo.toml).
 
+## Install the CLI (Linux, macOS, Windows)
+
+Prebuilt `shilpid` + `shilpi` binaries are published to
+[GitHub Releases](https://github.com/HolagundiWorks/shilpidb/releases) for
+Linux (x86_64), macOS (x86_64 and Apple Silicon), and Windows (x86_64) —
+built by [`.github/workflows/release.yml`](.github/workflows/release.yml).
+
+Linux / macOS:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/HolagundiWorks/shilpidb/main/scripts/install.sh | sh
+```
+
+Windows (PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/HolagundiWorks/shilpidb/main/scripts/install.ps1 | iex
+```
+
+Both scripts detect your OS/arch, download the matching release archive,
+install `shilpid`/`shilpi` to a per-user directory, and add it to your PATH.
+Pin a version with `SHILPIDB_VERSION=v0.1.1` (env var on Unix, or
+`$env:SHILPIDB_VERSION` before the PowerShell command) instead of installing
+latest. See the scripts themselves — [`scripts/install.sh`](scripts/install.sh),
+[`scripts/install.ps1`](scripts/install.ps1) — for every option.
+
+No release has been published yet as of this writing; the workflow runs (and
+these scripts start working) once someone with push access cuts one:
+
+```bash
+git tag v0.1.1 && git push origin v0.1.1
+```
+
+Until then, build from source with `cargo build --release -p shilpid -p shilpi`
+or run in place per the quick start below.
+
 ## Quick start: server + shell
 
 ```bash
