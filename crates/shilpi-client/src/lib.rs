@@ -24,9 +24,16 @@
 
 use std::io::{self, Read, Write};
 use std::net::{TcpStream, ToSocketAddrs};
+use std::time::Duration;
 
 use shilpi_protocol::{recv_response, send_request, Request, Response};
 use shilpidb::Bbox;
+
+/// Default per-operation socket timeout (read and write) applied by
+/// [`Client::connect`]. Generous enough for a large batch over a LAN, but
+/// bounded so a dead or hung server surfaces as [`Error::Io`] instead of
+/// blocking forever. Use [`Client::connect_with_timeout`] to override.
+pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// A failure talking to `shilpid`.
 #[derive(Debug)]
@@ -87,11 +94,53 @@ pub struct Client<S = TcpStream> {
 }
 
 impl Client<TcpStream> {
-    /// Connect to `shilpid` at `addr` (e.g. `"127.0.0.1:7420"`).
+    /// Connect to `shilpid` at `addr` (e.g. `"127.0.0.1:7420"`) with the
+    /// [`DEFAULT_TIMEOUT`] on connect and every read/write.
     pub fn connect(addr: impl ToSocketAddrs) -> Result<Self, Error> {
-        let stream = TcpStream::connect(addr)?;
+        Self::connect_with_timeout(addr, Some(DEFAULT_TIMEOUT))
+    }
+
+    /// Connect with an explicit per-operation timeout. `None` blocks
+    /// indefinitely (the raw socket default); `Some(d)` bounds the initial
+    /// connect and every subsequent read/write to `d`.
+    pub fn connect_with_timeout(
+        addr: impl ToSocketAddrs,
+        timeout: Option<Duration>,
+    ) -> Result<Self, Error> {
+        let stream = match timeout {
+            // Bounded connect: try each resolved address until one answers.
+            Some(t) => {
+                let mut last_err = None;
+                let mut connected = None;
+                for sa in addr.to_socket_addrs()? {
+                    match TcpStream::connect_timeout(&sa, t) {
+                        Ok(s) => {
+                            connected = Some(s);
+                            break;
+                        }
+                        Err(e) => last_err = Some(e),
+                    }
+                }
+                connected.ok_or_else(|| {
+                    last_err.unwrap_or_else(|| {
+                        io::Error::new(io::ErrorKind::InvalidInput, "no address to connect to")
+                    })
+                })?
+            }
+            None => TcpStream::connect(addr)?,
+        };
         stream.set_nodelay(true)?;
+        stream.set_read_timeout(timeout)?;
+        stream.set_write_timeout(timeout)?;
         Ok(Client { stream })
+    }
+
+    /// Change the per-operation read/write timeout on an existing connection
+    /// (`None` disables it).
+    pub fn set_timeout(&mut self, timeout: Option<Duration>) -> io::Result<()> {
+        self.stream.set_read_timeout(timeout)?;
+        self.stream.set_write_timeout(timeout)?;
+        Ok(())
     }
 }
 
@@ -355,6 +404,19 @@ mod tests {
                 bbox: bb(),
                 payload: b"p".to_vec()
             }
+        );
+    }
+
+    #[test]
+    fn bounded_connect_to_a_closed_port_errors() {
+        // Port 1 (tcpmux) is not listening — a bounded connect must return an
+        // error promptly rather than hanging.
+        let start = std::time::Instant::now();
+        let result = Client::connect_with_timeout("127.0.0.1:1", Some(Duration::from_millis(400)));
+        assert!(result.is_err());
+        assert!(
+            start.elapsed() < Duration::from_secs(3),
+            "bounded connect should fail fast"
         );
     }
 }

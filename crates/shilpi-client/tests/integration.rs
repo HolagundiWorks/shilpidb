@@ -153,3 +153,33 @@ fn read_only_server_rejects_writes() {
 
     let _ = std::fs::remove_file(&data_path);
 }
+
+#[test]
+fn connect_with_timeout_reaches_a_live_server() {
+    let Some((_guard, addr, data_path)) = spawn_shilpid(&[]) else {
+        eprintln!("skipping: shilpid binary not built (run `cargo test --workspace`)");
+        return;
+    };
+    // Retry the bounded connect while the accept loop comes up.
+    let mut db = loop_connect(&addr);
+
+    db.ping().unwrap();
+    db.insert(1, bb(0.0, 0.0, 1.0, 1.0), b"x".to_vec()).unwrap();
+    assert_eq!(db.get(1).unwrap().unwrap().payload, b"x");
+    // Tightening the timeout on a live, fast connection doesn't break ops.
+    db.set_timeout(Some(Duration::from_secs(5))).unwrap();
+    db.ping().unwrap();
+
+    let _ = std::fs::remove_file(&data_path);
+}
+
+/// Like [`connect`], but exercises the bounded [`Client::connect_with_timeout`].
+fn loop_connect(addr: &str) -> Client {
+    for _ in 0..50 {
+        if let Ok(c) = Client::connect_with_timeout(addr, Some(Duration::from_secs(2))) {
+            return c;
+        }
+        thread::sleep(Duration::from_millis(20));
+    }
+    panic!("could not connect to {addr}");
+}
