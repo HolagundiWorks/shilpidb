@@ -8,6 +8,15 @@ what exists in the codebase today — see [ROADMAP.md](ROADMAP.md) for what's
 actually built, in progress, or realistically next. Treat this file as the
 north star everything else is measured against, not a status report.
 
+> **Reference consumer.** [AADT CAD](https://github.com/HolagundiWorks/AADT)
+> embeds this engine (`shilpidb` codec + `SpatialGrid`) via its `aadt-vdb`
+> crate and connects to `shilpid` over `shilpi-client`. Much of the import,
+> semantic-recognition, metadata, and knowledge-graph work described below is
+> being built on the AADT side today, on top of this storage core — see the
+> [README's reference-application section](README.md#reference-application-aadt-cad)
+> and AADT's
+> [CAD + ShilpiDB architecture](https://github.com/HolagundiWorks/AADT/blob/main/docs/architecture/aadt-shilpidb-architecture.md).
+
 ---
 
 ## Vision
