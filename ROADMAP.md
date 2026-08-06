@@ -35,6 +35,10 @@ engine" product shape around it:
 - **`shilpi-http`** — a dependency-free JSON-over-HTTP gateway in front of
   `shilpid`, so non-Rust hosts can reach the store with a plain HTTP client.
   This is milestone 0 of the [AORMS integration](docs/AORMS-INTEGRATION.md).
+- **`shilpi-drawing`** — a typed 2D drawing model (entities, layers, units) on
+  top of the codec, with a versioned `.vdb` layout and a `shilpid`-records
+  bridge. This is the start of Phase 1 below / milestone 1 of the AORMS
+  integration.
 - **ShilpiDB Desktop** ([`gui/`](gui)) — a Tauri GUI (the Compass
   equivalent): connect to a server, browse records in a table and on a
   spatial canvas, run bbox queries, insert/delete, save to disk, or launch
@@ -65,21 +69,28 @@ behind the [AORMS](https://github.com/HolagundiWorks/aorms) platform. Milestone 
 (the `shilpi-http` gateway, so the TypeScript/Python stack can reach `shilpid`)
 has started; the later milestones there build on the engine phases below.
 
-## Phase 1 — Drawing data model
+## Phase 1 — Drawing data model (in progress)
 
 Goal: give hosts a real, reusable schema for 2D vector drawings instead of
 requiring every host to invent entity encoding from scratch. This is where
 the engine starts catching up to ARCHITECTURE.md's Geometry Engine.
 
-- Entity types: point, polyline, arc, bezier/spline, text label, at minimum —
-  each as `Bbox` + payload encoded with the existing codec.
-- Layers / groups: named, orderable containers of entities; visibility and
-  simple style attributes (stroke, fill, width).
-- A documented `.vdb` file layout: header (`MAGIC` + version, already in
-  place) → metadata section → entity payload sections → `SpatialGrid`. Version
-  the layout so old files stay readable as it evolves.
-- Round-trip tests: build a drawing, serialize, reload, verify entities +
-  index match.
+Landed in [`crates/shilpi-drawing`](crates/shilpi-drawing):
+
+- ✅ Entity types: point, polyline, arc, text label — each as `Bbox` + payload
+  encoded with the existing codec. (Bezier/spline still to come.)
+- ✅ Layers: named containers with visibility and simple style attributes
+  (stroke color, width); entities reference a layer.
+- ✅ Units (millimetre default, matching AORMS).
+- ✅ A documented, versioned `.vdb` layout: header (`MAGIC` + format version) →
+  units → layers → entity payload sections. (The spatial grid is currently
+  *derived* on load rather than stored; persisting it is a follow-up.)
+- ✅ Round-trip tests: build a drawing, serialize, reload, verify entities; plus
+  a `to_records()`/`decode_payload()` bridge so a whole drawing pushes into
+  `shilpid` and reconstructs from a stored record.
+
+Still open: bezier/spline entities, an optional persisted `SpatialGrid` section,
+and per-entity metadata (which flows into Phase 3).
 
 ## Phase 2 — Import / export interchange
 

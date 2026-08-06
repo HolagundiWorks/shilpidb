@@ -20,6 +20,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "shilpi-drawing"
+version = "0.2.0"
+dependencies = [
+ "shilpi-client",
+ "shilpidb",
+]
+
+[[package]]
 name = "shilpi-http"
 version = "0.2.0"
 dependencies = [
