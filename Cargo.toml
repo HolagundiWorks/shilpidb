@@ -6,6 +6,7 @@ members = [
     "crates/shilpi-client",
     "crates/shilpid",
     "crates/shilpi",
+    "crates/shilpi-http",
 ]
 # The Tauri GUI (gui/src-tauri) is deliberately its own Cargo workspace, not
 # a member of this one: it pulls in tauri/serde/tokio, which would leak into

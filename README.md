@@ -19,6 +19,7 @@ what's actually implemented right now.
 | [`crates/shilpi-protocol`](crates/shilpi-protocol) | The length-framed request/response wire protocol `shilpid` and its clients (the shell, the GUI) share, built on the `shilpidb` codec. |
 | [`crates/shilpid`](crates/shilpid)           | The server: a TCP daemon, an in-memory record store backed by `SpatialGrid`, file persistence. |
 | [`crates/shilpi`](crates/shilpi)             | A `mongosh`-style CLI shell that talks to `shilpid`.                                 |
+| [`crates/shilpi-http`](crates/shilpi-http)   | A dependency-free HTTP/JSON gateway in front of `shilpid`, so non-Rust hosts (e.g. the AORMS TypeScript/Python stack) can reach the store over REST. |
 | [`gui`](gui)                                 | ShilpiDB Desktop — a Tauri GUI (the Compass equivalent) for browsing and querying a `shilpid` server. Its own Cargo workspace; see [`gui/README.md`](gui/README.md). |
 
 Everything except `gui` is one Cargo workspace rooted here, and stays
@@ -91,6 +92,31 @@ shilpi> help
 
 `shilpi -e "<command>"` runs one command non-interactively (scripting/tests).
 
+## Reach it over HTTP (non-Rust hosts)
+
+`shilpid` speaks a binary protocol with a Rust-only client. For hosts in other
+languages, `shilpi-http` puts a small JSON-over-HTTP gateway in front of it:
+
+```bash
+# terminal 1: the server
+cargo run -p shilpid -- --bind 127.0.0.1:7420 --data ./mydb.vdb
+# terminal 2: the gateway (defaults: HTTP :7421, backend 127.0.0.1:7420)
+cargo run -p shilpi-http -- --bind 127.0.0.1:7421 --backend 127.0.0.1:7420
+```
+
+```bash
+# insert a record (bbox in query params, payload is the raw body), then query it
+curl -X PUT "http://127.0.0.1:7421/records/1?minX=0&minY=0&maxX=10&maxY=10" --data-binary hello
+curl "http://127.0.0.1:7421/query/bbox?minX=-5&minY=-5&maxX=5&maxY=5"   # -> {"ids":[1]}
+curl "http://127.0.0.1:7421/records/1"   # -> {"id":1,"bbox":{...},"payloadHex":"68656c6c6f","payloadText":"hello"}
+```
+
+Endpoints: `GET /health`, `GET /stats`, `GET /records`, `GET /records/{id}`,
+`PUT /records/{id}`, `DELETE /records/{id}`, `GET /query/bbox`,
+`GET /query/point`, `POST /save`. See
+[`crates/shilpi-http`](crates/shilpi-http) for details, and
+[`docs/AORMS-INTEGRATION.md`](docs/AORMS-INTEGRATION.md) for why it exists.
+
 ## Use the storage engine directly
 
 ```rust
@@ -135,6 +161,16 @@ The two projects split responsibilities cleanly:
 | Storage codec + `SpatialGrid` | CAD editor, command system, rendering |
 | `shilpid` server, `shilpi` shell, desktop GUI | DXF/DWG import + parsing, semantic recognition |
 | The `.vdb` engine primitives | Entity model, transactions/undo, the layer standard & metadata |
+
+### AORMS platform
+
+[**AORMS**](https://github.com/HolagundiWorks/aorms) (Architecture Office
+Resources Management System) is the broader platform for AEC consulting firms
+from the same authors. Its plan-measurement and quantity-takeoff surface is the
+natural consumer of ShilpiDB's geometry substrate. There is no live integration
+yet — the [`shilpi-http`](crates/shilpi-http) gateway above is the first step
+toward one. See [`docs/AORMS-INTEGRATION.md`](docs/AORMS-INTEGRATION.md) for the
+ecosystem map and the phased plan.
 
 So the ambitious import / semantic / knowledge-graph layers in ARCHITECTURE.md
 are, in practice, being built out **on the AADT side today** on top of this

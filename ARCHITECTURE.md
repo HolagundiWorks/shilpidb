@@ -16,6 +16,12 @@ north star everything else is measured against, not a status report.
 > [README's reference-application section](README.md#reference-application-aadt-cad)
 > and AADT's
 > [CAD + ShilpiDB architecture](https://github.com/HolagundiWorks/AADT/blob/main/docs/architecture/aadt-shilpidb-architecture.md).
+>
+> **Ecosystem.** The [AORMS](https://github.com/HolagundiWorks/aorms) platform
+> (AEC consulting-firm management) is the broader consumer this engine is
+> heading toward powering — its plan-measurement/takeoff surface over ShilpiDB's
+> geometry. The integration plan lives in
+> [docs/AORMS-INTEGRATION.md](docs/AORMS-INTEGRATION.md).
 
 ---
 
@@ -349,6 +355,12 @@ Authentication, RBAC, TLS, encryption, audit logs, API keys, SSO, OAuth2.
 ## APIs
 
 REST, gRPC, and client bindings for C++, C#, Python, Rust, Go, JavaScript.
+
+Today: a Rust client (`shilpi-client`) over the binary protocol, plus a
+dependency-free JSON-over-HTTP gateway (`shilpi-http`) so non-Rust hosts can
+reach the store. This is the first concrete step toward the
+[AORMS](https://github.com/HolagundiWorks/aorms) integration — see
+[docs/AORMS-INTEGRATION.md](docs/AORMS-INTEGRATION.md).
 
 ---
 

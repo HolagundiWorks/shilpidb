@@ -32,6 +32,9 @@ engine" product shape around it:
   mode, log level, and the spatial-grid tunables (`GridConfig`).
 - **`shilpi`** — a `mongosh`-style CLI shell that connects to `shilpid` and
   runs the same operations interactively or via `-e "<command>"`.
+- **`shilpi-http`** — a dependency-free JSON-over-HTTP gateway in front of
+  `shilpid`, so non-Rust hosts can reach the store with a plain HTTP client.
+  This is milestone 0 of the [AORMS integration](docs/AORMS-INTEGRATION.md).
 - **ShilpiDB Desktop** ([`gui/`](gui)) — a Tauri GUI (the Compass
   equivalent): connect to a server, browse records in a table and on a
   spatial canvas, run bbox queries, insert/delete, save to disk, or launch
@@ -53,6 +56,14 @@ This is Storage Engine + a first Index Engine from ARCHITECTURE.md's module
 list, wrapped in a real server/shell/GUI product shape — and nothing else
 from that list yet: no entity/geometry types beyond `Bbox`, no metadata, no
 topology, no embeddings, no importers (DWG/DXF/PDF/SVG).
+
+## Ecosystem: AORMS integration
+
+Beyond the engine's own phases below, [docs/AORMS-INTEGRATION.md](docs/AORMS-INTEGRATION.md)
+tracks the concrete path to making ShilpiDB the geometry/measurement engine
+behind the [AORMS](https://github.com/HolagundiWorks/aorms) platform. Milestone 0
+(the `shilpi-http` gateway, so the TypeScript/Python stack can reach `shilpid`)
+has started; the later milestones there build on the engine phases below.
 
 ## Phase 1 — Drawing data model
 
