@@ -137,9 +137,9 @@ overflow/huge-query thresholds) via `GridConfig`, for hosts that outgrow the
 auto-chosen defaults `build` uses. See the crate docs (`cargo doc -p shilpidb
 --open`) for the codec and a full round trip.
 
-## Reference application: AADT CAD
+## Reference application: O-Draft
 
-[**AADT CAD**](https://github.com/HolagundiWorks/AADT) is the primary consumer
+[**O-Draft**](https://github.com/HolagundiWorks/AAD) is the primary consumer
 of ShilpiDB and the reference implementation of the "single source of truth"
 vision in [ARCHITECTURE.md](ARCHITECTURE.md) — a 2D engineering drafting app
 that stores every entity as a structured object in ShilpiDB rather than in a
@@ -148,15 +148,15 @@ binary drawing file.
 It uses ShilpiDB two ways, both pinned to a single commit so one `shilpidb`
 type is shared across them:
 
-- **Embedded engine** — AADT's `aadt-vdb` crate re-exports the `shilpidb` codec
+- **Embedded engine** — O-Draft's `aad-vdb` crate re-exports the `shilpidb` codec
   (`Reader`/`Writer`) and spatial index (`SpatialGrid`) directly, and composes
   its `.vdb` files from them (native vector records + a persisted grid).
-- **Server client** — `aadt-vdb`'s `VdbClient` speaks AADT's entity model to a
+- **Server client** — `aad-vdb`'s `VdbClient` speaks O-Draft's entity model to a
   running `shilpid` over `shilpi-client`, for the shared/multi-client path.
 
 The two projects split responsibilities cleanly:
 
-| ShilpiDB (this repo) | AADT CAD |
+| ShilpiDB (this repo) | O-Draft |
 |----------------------|----------|
 | Storage codec + `SpatialGrid` | CAD editor, command system, rendering |
 | `shilpid` server, `shilpi` shell, desktop GUI | DXF/DWG import + parsing, semantic recognition |
@@ -173,12 +173,12 @@ toward one. See [`docs/AORMS-INTEGRATION.md`](docs/AORMS-INTEGRATION.md) for the
 ecosystem map and the phased plan.
 
 So the ambitious import / semantic / knowledge-graph layers in ARCHITECTURE.md
-are, in practice, being built out **on the AADT side today** on top of this
+are, in practice, being built out **on the O-Draft side today** on top of this
 engine. For how the layer standard turns a stored drawing into an
-agent-actionable model, see AADT's
-[layers & AI agents guide](https://github.com/HolagundiWorks/AADT/blob/main/docs/standards/shilpidb-layers-and-agents.md)
+agent-actionable model, see O-Draft's
+[layers & AI agents guide](https://github.com/HolagundiWorks/AAD/blob/main/docs/standards/shilpidb-layers-and-agents.md)
 and its
-[CAD + ShilpiDB architecture](https://github.com/HolagundiWorks/AADT/blob/main/docs/architecture/aadt-shilpidb-architecture.md).
+[CAD + ShilpiDB architecture](https://github.com/HolagundiWorks/AAD/blob/main/docs/architecture/aadt-shilpidb-architecture.md).
 
 ## Desktop GUI
 

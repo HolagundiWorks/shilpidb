@@ -8,14 +8,14 @@ what exists in the codebase today — see [ROADMAP.md](ROADMAP.md) for what's
 actually built, in progress, or realistically next. Treat this file as the
 north star everything else is measured against, not a status report.
 
-> **Reference consumer.** [AADT CAD](https://github.com/HolagundiWorks/AADT)
-> embeds this engine (`shilpidb` codec + `SpatialGrid`) via its `aadt-vdb`
+> **Reference consumer.** [O-Draft](https://github.com/HolagundiWorks/AAD)
+> embeds this engine (`shilpidb` codec + `SpatialGrid`) via its `aad-vdb`
 > crate and connects to `shilpid` over `shilpi-client`. Much of the import,
 > semantic-recognition, metadata, and knowledge-graph work described below is
-> being built on the AADT side today, on top of this storage core — see the
-> [README's reference-application section](README.md#reference-application-aadt-cad)
-> and AADT's
-> [CAD + ShilpiDB architecture](https://github.com/HolagundiWorks/AADT/blob/main/docs/architecture/aadt-shilpidb-architecture.md).
+> being built on the O-Draft side today, on top of this storage core — see the
+> [README's reference-application section](README.md#reference-application-o-draft)
+> and O-Draft's
+> [CAD + ShilpiDB architecture](https://github.com/HolagundiWorks/AAD/blob/main/docs/architecture/aadt-shilpidb-architecture.md).
 >
 > **Ecosystem.** The [AORMS](https://github.com/HolagundiWorks/aorms) platform
 > (AEC consulting-firm management) is the broader consumer this engine is

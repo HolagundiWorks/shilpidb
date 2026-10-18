@@ -11,7 +11,7 @@ is about the storage engine itself) and [ARCHITECTURE.md](../ARCHITECTURE.md)
 | Project | Role |
 |---|---|
 | **ShilpiDB** (this repo) | The geometry-native storage substrate: the `.vdb` codec, the `SpatialGrid`, and the `shilpid` server / `shilpi` shell / desktop GUI around it. |
-| **AADT CAD** ([`HolagundiWorks/AADT`](https://github.com/HolagundiWorks/AADT)) | The reference CAD consumer — embeds the codec + grid and/or talks to `shilpid`. |
+| **O-Draft** ([`HolagundiWorks/AAD`](https://github.com/HolagundiWorks/AAD)) | The reference CAD consumer — embeds the codec + grid and/or talks to `shilpid`. |
 | **AORMS** ([`HolagundiWorks/aorms`](https://github.com/HolagundiWorks/aorms)) | Architecture Office Resources Management System — the platform for AEC consulting firms (TypeScript/Fastify/tRPC + PostgreSQL, React SPA, a Python worker). ESTI is its embedded-intelligence layer. |
 
 ShilpiDB is the **geometry floor**; AORMS is the **business/ops platform** whose
