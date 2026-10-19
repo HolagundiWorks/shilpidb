@@ -35,13 +35,14 @@ engine" product shape around it:
 - **`shilpi-http`** — a dependency-free JSON-over-HTTP gateway in front of
   `shilpid`, so non-Rust hosts can reach the store with a plain HTTP client.
   This is milestone 0 of the [AORMS integration](docs/AORMS-INTEGRATION.md).
-- **ShilpiDB Desktop** ([`gui/`](gui)) — a Tauri GUI (the Compass
-  equivalent): connect to a server, browse records in a table and on a
-  spatial canvas, run bbox queries, insert/delete, save to disk, or launch
-  the bundled `shilpid` sidecar directly from the app.
-- **Windows installer** — Tauri's bundler, with `shilpid` and `shilpi`
-  staged as sidecar binaries, so one installer sets up the server, the
-  shell, and the GUI together (see [`gui/README.md`](gui/README.md)).
+- **ShilpiDB Desktop** ([`gui/desktop`](gui/desktop)) — a WinUI 3 app (the
+  Compass equivalent): connect to a server, browse records in a table and on a
+  spatial canvas, run bbox queries, insert/delete, save to disk, or launch a
+  local `shilpid` from the window. The earlier Tauri shell remains in
+  `gui/src-tauri`.
+- **Windows installer** — the Tauri shell's NSIS bundler, with `shilpid` and
+  `shilpi` staged as sidecar binaries (see [`gui/README.md`](gui/README.md)).
+  The WinUI app is run from source with `dotnet run`.
 - **Cross-platform CLI installers** — [`.github/workflows/release.yml`](.github/workflows/release.yml)
   builds `shilpid`/`shilpi` natively for Linux, macOS (x86_64 + arm64), and
   Windows on a pushed `v*` tag and publishes them to a GitHub Release;

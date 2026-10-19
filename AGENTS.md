@@ -21,12 +21,14 @@ to `stable` (currently 1.97.x) with the `rustfmt` and `clippy` components. If
 - `shilpi` (`crates/shilpi`) — a `mongosh`-style CLI shell (a client, not a
   service). Use `-e "<cmd>"` to run a single command non-interactively.
 - `shilpidb`, `shilpi-protocol`, `shilpi-client` — libraries.
-- `gui/` (ShilpiDB Desktop) — a Tauri v2 app in its **own** Cargo workspace
+- `gui/desktop` (ShilpiDB Desktop) — a WinUI 3 / C# app. Run it with
+  `dotnet run --project gui/desktop/src/ShilpiDB.Desktop` after
+  `cargo build -p shilpid`. It needs Windows and a display. Protocol tests:
+  `dotnet test gui/desktop/ShilpiDB.Desktop.sln`.
+- `gui/src-tauri` — the earlier Tauri v2 shell, its own Cargo workspace
   (excluded from the root workspace, so `cargo build --workspace` never touches
-  it). It targets Windows (NSIS installer) and needs a display + system webview
-  (webkit2gtk/GTK) plus the PowerShell sidecar-staging script
-  (`scripts/prepare-sidecars.ps1`). Treat it as optional; it is not runnable in a
-  headless Linux VM without extra system libraries and a display.
+  it). Optional. The NSIS installer path still lives there and needs a display
+  plus `scripts/prepare-sidecars.ps1`.
 
 ### Lint / test / build / run
 

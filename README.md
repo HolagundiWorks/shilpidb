@@ -20,12 +20,13 @@ what's actually implemented right now.
 | [`crates/shilpid`](crates/shilpid)           | The server: a TCP daemon, an in-memory record store backed by `SpatialGrid`, file persistence. |
 | [`crates/shilpi`](crates/shilpi)             | A `mongosh`-style CLI shell that talks to `shilpid`.                                 |
 | [`crates/shilpi-http`](crates/shilpi-http)   | A dependency-free HTTP/JSON gateway in front of `shilpid`, so non-Rust hosts (e.g. the AORMS TypeScript/Python stack) can reach the store over REST. |
-| [`gui`](gui)                                 | ShilpiDB Desktop — a Tauri GUI (the Compass equivalent) for browsing and querying a `shilpid` server. Its own Cargo workspace; see [`gui/README.md`](gui/README.md). |
+| [`gui/desktop`](gui/desktop)                 | ShilpiDB Desktop — a WinUI 3 app for browsing and querying a `shilpid` server. See [`gui/README.md`](gui/README.md). |
 
 Everything except `gui` is one Cargo workspace rooted here, and stays
-dependency-free (std only). `gui` pulls in Tauri/serde/tokio, so it's
-deliberately excluded from that workspace — see the `exclude` note in
-[`Cargo.toml`](Cargo.toml).
+dependency-free (std only). The Windows desktop app is WinUI 3 under
+`gui/desktop` (its own .NET solution). An earlier Tauri shell still lives in
+`gui/src-tauri` and is excluded from this workspace — see the `exclude` note
+in [`Cargo.toml`](Cargo.toml).
 
 ## Install the CLI (Linux, macOS, Windows)
 
@@ -182,10 +183,15 @@ and its
 
 ## Desktop GUI
 
-See [`gui/README.md`](gui/README.md) — connect to a `shilpid`, browse records
-on a spatial canvas and in a table, run queries, insert/delete, save to disk.
-The Windows installer bundles the GUI together with `shilpid` and `shilpi` as
-sidecar binaries, so one install sets up the whole stack.
+The Windows app is WinUI 3. See [`gui/README.md`](gui/README.md) — connect to
+a `shilpid`, browse records on a spatial canvas and in a table, run queries,
+insert/delete, and save to disk. `Start local server` launches `shilpid` from
+the window.
+
+```powershell
+cargo build -p shilpid
+dotnet run --project gui/desktop/src/ShilpiDB.Desktop
+```
 
 ## Roadmap
 

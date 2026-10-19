@@ -9,3 +9,7 @@
 /gui/src-tauri/target
 /gui/src-tauri/gen
 /gui/src-tauri/binaries
+
+# WinUI 3 desktop build output
+/gui/desktop/**/bin/
+/gui/desktop/**/obj/

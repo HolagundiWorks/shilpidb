@@ -1,55 +1,58 @@
 # ShilpiDB Desktop
 
-A [Tauri](https://tauri.app) GUI for browsing and querying a `shilpid`
-server — the Compass equivalent for ShilpiDB. Plain HTML/CSS/JS frontend
-(`frontend/`, no npm build step), Rust backend (`src-tauri/`) that talks to
-`shilpid` over `shilpi-protocol` on a plain TCP socket.
+A Windows desktop app for browsing and querying a `shilpid` server — the
+Compass equivalent for ShilpiDB. The UI is WinUI 3 in C#
+([`desktop/`](desktop)). It speaks `shilpi-protocol` directly over TCP, so it
+does not go through the Tauri shell.
 
-This is its own Cargo workspace, separate from the root one — see the
-`exclude` note in the repo's top-level `Cargo.toml` for why.
+## Run it
 
-## Run it in development
-
-`shilpid` and `shilpi` ship as bundled sidecar binaries, but Tauri doesn't
-build them for you — stage them first:
+Build the server once, then start the app:
 
 ```powershell
-powershell -File ../scripts/prepare-sidecars.ps1
+cargo build -p shilpid
+dotnet run --project gui/desktop/src/ShilpiDB.Desktop
 ```
 
-Then, from `gui/src-tauri`:
+Requires the .NET 8 SDK and Windows 10 1809 or later. The project is
+unpackaged and carries its own Windows App SDK runtime, so a separate runtime
+install is not required. Open [`desktop/ShilpiDB.Desktop.sln`](desktop/ShilpiDB.Desktop.sln)
+in Visual Studio if you want the designer.
 
-```bash
-cargo install tauri-cli --version "^2" --locked   # once
+`Start local server` looks for `shilpid.exe` in this order: `SHILPID_PATH`,
+next to the app, `target/debug` or `target/release` while walking up from the
+app directory, then `PATH`. The database file for that local server is
+`%LOCALAPPDATA%\ShilpiDB\desktop.vdb`.
+
+Protocol tests, including a live round trip when `shilpid` is on disk:
+
+```powershell
+dotnet test gui/desktop/ShilpiDB.Desktop.sln
+```
+
+## What the app can do
+
+- **Connect** to any running `shilpid` at `host:port`, or **Start local server**
+  to launch `shilpid` on an OS-assigned port (stopped when the window closes).
+- Browse records in a table and on a spatial canvas. Click a row or a box to
+  inspect the payload as text and hex.
+- Run a bbox query. Matches stay bright, other records dim, and the query
+  window is drawn as a dashed rectangle.
+- Insert or replace a record, delete the selected one, and flush the database
+  to disk (**Save to disk**).
+
+## Tauri shell
+
+[`src-tauri/`](src-tauri) is the earlier Tauri v2 shell (plain HTML/CSS/JS in
+[`frontend/`](frontend), Rust commands behind it). It is its own Cargo
+workspace, excluded from the root one. The Windows NSIS installer described in
+`src-tauri/tauri.conf.json` still comes from that shell:
+
+```powershell
+powershell -File scripts/prepare-sidecars.ps1
+cargo install tauri-cli --version "^2" --locked
 cargo tauri dev
 ```
 
-This opens the app window pointed at the static `frontend/` folder with hot
-reload on file save (no bundler in the loop — it's plain files).
-
-## What the GUI can do
-
-- **Connect** to any running `shilpid` at `host:port`, or click **Start
-  local server** to launch the bundled `shilpid` sidecar itself (an
-  OS-assigned port, spawned and torn down with the GUI window).
-- Browse all records (id + bounding box) in a table and on a spatial canvas.
-- Run a bbox query and see matches highlighted in both views.
-- Insert/replace a record, inspect one (payload as text and hex), delete it.
-- Flush the in-memory database to disk (`Save`).
-
-## Build the installer
-
-```bash
-powershell -File ../scripts/prepare-sidecars.ps1 -Release
-cargo tauri build
-```
-
-Produces a Windows NSIS installer (see `src-tauri/tauri.conf.json`'s
-`bundle` section) bundling the GUI plus the `shilpid` and `shilpi` sidecars,
-so installing the app gives you the server, the shell, and the GUI together.
-
-## Frontend without Tauri
-
-`frontend/` can be opened in a plain browser for layout/interaction checks —
-it falls back to an in-memory mock (`mockInvoke` in `app.js`) when
-`window.__TAURI__` isn't present, so nothing there talks to a real server.
+Run the Tauri commands from `gui/src-tauri`. `frontend/` can also be opened in
+a browser; it uses an in-memory mock when `window.__TAURI__` is absent.
