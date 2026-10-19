@@ -1,0 +1,18 @@
+[package]
+name = "shilpi-drawing"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "A typed 2D drawing data model (entities, layers, units) on top of the shilpidb codec + spatial index, with a versioned .vdb layout and a bridge to shilpid records."
+
+[dependencies]
+shilpidb = { path = "../shilpidb", version = "0.2.0" }
+
+[dev-dependencies]
+shilpi-client = { path = "../shilpi-client", version = "0.2.0" }
+
+[lints]
+workspace = true

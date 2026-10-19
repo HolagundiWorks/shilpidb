@@ -62,13 +62,22 @@ Still open (follow-ups within this milestone): a JSON **request-body** variant
 of insert (and a batch/`InsertMany` endpoint), CORS headers for browser callers,
 and structured error codes.
 
-### Milestone 1 — a typed drawing entity model (engine [Phase 1])
+### Milestone 1 — a typed drawing entity model (engine [Phase 1]) (started ✅)
 
-The gateway moves opaque bytes; AORMS needs *meaning*. Give the engine typed
-entities (point, polyline, arc, text), layers/groups, units (AORMS works in
-**mm**), and a versioned `.vdb` layout, so a drawing round-trips as real
-entities rather than host-specific payloads. Maps onto
+The gateway moves opaque bytes; AORMS needs *meaning*. This is the
+[`crates/shilpi-drawing`](../crates/shilpi-drawing) crate: typed entities
+(point, polyline, arc, text), layers with style, units (millimetres by default,
+matching AORMS), and a versioned `.vdb` layout, so a drawing round-trips as real
+entities rather than host-specific payloads. It builds only on the
+dependency-free `shilpidb` codec + spatial index and bridges to the server via
+`Drawing::to_records()` / `Entity::decode_payload()`. See the worked
+`floorplan` example for a whole drawing pushed to a live `shilpid`. Maps onto
 [ROADMAP.md](../ROADMAP.md) Phase 1.
+
+Still open (follow-ups within this milestone): bezier/spline entities, per-entity
+metadata (material/discipline — really the start of milestone 3), and an
+optional persisted spatial-grid section in the file (today the grid is derived
+on load).
 
 ### Milestone 2 — import/export + calibration (engine [Phase 2])
 
