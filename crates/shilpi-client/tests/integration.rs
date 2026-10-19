@@ -1,5 +1,5 @@
 //! End-to-end tests of the typed `shilpi-client` API against a real `shilpid`
-//! process — the same surface a programmatic host (e.g. AAD) uses. The unit
+//! process — the same surface a programmatic host (e.g. O-Draft) uses. The unit
 //! tests in `src/lib.rs` cover response mapping with a fake stream; these
 //! prove the whole path over a real socket, including server-side errors.
 
