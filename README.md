@@ -20,6 +20,7 @@ what's actually implemented right now.
 | [`crates/shilpid`](crates/shilpid)           | The server: a TCP daemon, an in-memory record store backed by `SpatialGrid`, file persistence. |
 | [`crates/shilpi`](crates/shilpi)             | A `mongosh`-style CLI shell that talks to `shilpid`.                                 |
 | [`crates/shilpi-http`](crates/shilpi-http)   | A dependency-free HTTP/JSON gateway in front of `shilpid`, so non-Rust hosts (e.g. the AORMS TypeScript/Python stack) can reach the store over REST. |
+| [`crates/shilpi-drawing`](crates/shilpi-drawing) | A typed 2D drawing model (entities: point/polyline/arc/text; layers; units) on top of the `shilpidb` codec, with a versioned `.vdb` layout and a bridge to `shilpid` records. |
 | [`gui`](gui)                                 | ShilpiDB Desktop — a Tauri GUI (the Compass equivalent) for browsing and querying a `shilpid` server. Its own Cargo workspace; see [`gui/README.md`](gui/README.md). |
 
 Everything except `gui` is one Cargo workspace rooted here, and stays
@@ -116,6 +117,40 @@ Endpoints: `GET /health`, `GET /stats`, `GET /records`, `GET /records/{id}`,
 `GET /query/point`, `POST /save`. See
 [`crates/shilpi-http`](crates/shilpi-http) for details, and
 [`docs/AORMS-INTEGRATION.md`](docs/AORMS-INTEGRATION.md) for why it exists.
+
+## Model a drawing (typed entities)
+
+The engine stores opaque `(id, bbox, bytes)` records; `shilpi-drawing` gives
+those bytes meaning — a reusable schema of 2D entities (point, polyline, arc,
+text), layers, and units (millimetres by default) — so hosts don't each invent
+their own encoding. A `Drawing` either serializes to a versioned `.vdb` file or
+lowers to `shilpid` records for `insert_many`:
+
+```rust
+use shilpi_drawing::{Drawing, Entity, Geometry, Layer, Units};
+use shilpidb::Point;
+
+let mut d = Drawing::new(Units::Millimeter);
+let walls = d.add_layer(Layer::new("walls"));
+d.push(1, walls, Geometry::Polyline {
+    points: vec![Point::new(0.0, 0.0), Point::new(5000.0, 0.0)],
+    closed: false,
+});
+
+// Push the whole drawing to shilpid, then reconstruct one entity from a record.
+let records = d.to_records();                        // (id, bbox, payload) each
+let back = Entity::decode_payload(records[0].0, &records[0].2).unwrap();
+assert_eq!(back.id, 1);
+```
+
+Run the worked end-to-end example against a live server:
+
+```bash
+cargo run -p shilpid -- --bind 127.0.0.1:7420 --data ./floorplan.vdb   # terminal 1
+cargo run -p shilpi-drawing --example floorplan -- --host 127.0.0.1:7420 # terminal 2
+```
+
+This is milestone 1 of the [AORMS integration](docs/AORMS-INTEGRATION.md).
 
 ## Use the storage engine directly
 
